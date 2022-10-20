@@ -144,6 +144,8 @@ const createBookList = (bookShelfObject) =>{
   redBtn.addEventListener("click", ()=>{
     deleteBook(id)
   })
+
+  return article;
 }
 
 const addBookShelf = () =>{
