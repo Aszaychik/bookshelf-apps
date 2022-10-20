@@ -31,8 +31,11 @@
 // Dengan begitu, Anda harus menyimpan data buku pada localStorage.
 const bookShelf = []
 const RENDER_EVENT = 'render-bookshelf';
+const STORAGE_KEY = 'key-bookshelf'
+const SAVED_EVENT = 'saved-bookshelf'
 
-function generateId() {
+
+const generateId = () => {
   return +new Date();
 }
 
@@ -46,7 +49,7 @@ const generateBookShelfObject = (id, title, author, year, isComplete) =>{
   }
 }
 
-function findBook(bookId){
+const findBook = (bookId) => {
   for(const bookItem of bookShelf){
     if(bookItem.id === bookId){
       return bookItem
@@ -55,7 +58,7 @@ function findBook(bookId){
   return null
 }
 
-function findBookIndex(bookId){
+const findBookIndex = (bookId) => {
   for(const index in bookShelf){
     if(bookShelf[index].id === bookId){
       return index;
@@ -63,6 +66,37 @@ function findBookIndex(bookId){
   }
   return -1
 }
+
+const isStorageExist = () =>{
+  if (typeof (Storage) === undefined) {
+    alert('Browser kamu tidak mendukung local storage');
+    return false;
+  }
+  return true;
+}
+
+const saveBook = ()=>{
+  if (isStorageExist()) {
+    const parsed /* string */ = JSON.stringify(bookShelf);
+    localStorage.setItem(STORAGE_KEY, parsed);
+    document.dispatchEvent(new Event(SAVED_EVENT));
+  }
+}
+
+const loadDataFromStorage = ()=>{
+  const serializedData /* string */ = localStorage.getItem(STORAGE_KEY);
+   let data = JSON.parse(serializedData);
+ 
+   if (data !== null) {
+     for (const book of data) {
+       bookShelf.push(book);
+     }
+   }
+ 
+   document.dispatchEvent(new Event(RENDER_EVENT));
+}
+
+
 
 const createBookList = (bookShelfObject) =>{
   const{id,title,author,year,isComplete} = bookShelfObject
@@ -118,13 +152,14 @@ const addBookShelf = () =>{
   const inputBookYear = document.getElementById("inputBookYear").value;
   const inputBookIsComplete = document.getElementById("inputBookIsComplete").checked;
 
-  bookId = generateId()
-  const bookShelfObject = generateBookShelfObject(bookId, inputBookTitle, inputBookAuthor, inputBookYear, inputBookIsComplete);
+  const generateID = generateId()
+  const bookShelfObject = generateBookShelfObject(generateID, inputBookTitle, inputBookAuthor, inputBookYear, inputBookIsComplete);
   bookShelf.push(bookShelfObject)
 
   document.dispatchEvent(new Event(RENDER_EVENT));
 
   console.log('bookShelfObject', bookShelfObject)
+  saveBook()
 }
 
 const toIncomplete = (id) =>{
@@ -132,6 +167,7 @@ const toIncomplete = (id) =>{
   if(bookTarget == null)return;
   bookTarget.isComplete = false;
   document.dispatchEvent(new Event(RENDER_EVENT))
+  saveBook()
 }
 
 const toComplete = (id) =>{
@@ -139,6 +175,7 @@ const toComplete = (id) =>{
   if(bookTarget == null)return;
   bookTarget.isComplete = true;
   document.dispatchEvent(new Event(RENDER_EVENT))
+  saveBook()
 }
 
 const deleteBook = (id) =>{
@@ -147,6 +184,7 @@ const deleteBook = (id) =>{
   bookShelf.splice(bookTarget, 1)
 
   document.dispatchEvent(new Event(RENDER_EVENT))
+  saveBook()
 }
 
 
@@ -157,6 +195,10 @@ document.addEventListener('DOMContentLoaded', function () {
     event.preventDefault();
     addBookShelf();
   });
+
+  if (isStorageExist()) {
+    loadDataFromStorage();
+  }
 });
 
 document.addEventListener(RENDER_EVENT, function (){
